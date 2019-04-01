@@ -1,1 +1,302 @@
 
+SPRING
+一、spring事务
+spring事务的隔离级别：
+1、默认的-----使用数据库的默认隔离界别（mysql：可重复读-Repeatable_read）
+2、未提交读：会出现脏读、不可重复读、脏读
+3、已提交读：会出现不可重复读、脏读
+4、可重复读：会出现脏读
+5、可串行化：不推荐使用
+
+spring事务传播机制
+有7种，分为三类：支持当前事物的，不支持当前事务的，嵌套事务
+支持当前事务：PROPAGATION_REQUIRED、PROPAGATION_SUPPORTS、PROPAGATION_MANDATORY
+不支持当前事务：PROPAGATION_REQUIRES_NEW、PROPAGATION_NOT_SUPPORTED、PROPAGATION_NEVER
+嵌套事务：PROPAGATION_NESTED
+
+spring事务的实现方式
+1、编程式事务（入侵代码，不推荐使用）
+PlatformTransactionManager
+TransactionTemplate
+2、声明式事务（aop切面，底层使用动态代理实现）
+配置xml+@transactional注解
+
+Spring 声明式事务底层原理
+aop切面，使用java动态代理
+https://www.cnblogs.com/flyoung2008/p/3251148.html
+对上面例子的总结：
+1、通过实现InvocationHandler接口创建自己的调用处理器 IvocationHandler handler = new InvocationHandlerImpl(...);
+2、通过为Proxy类指定ClassLoader对象和一组interface创建动态代理类
+Class clazz = Proxy.getProxyClass(classLoader,new Class[]{...});
+3、通过反射机制获取动态代理类的构造函数，其参数类型是调用处理器接口类型
+Constructor constructor = clazz.getConstructor(new Class[]{InvocationHandler.class});
+4、通过构造函数创建代理类实例，此时需将调用处理器对象作为参数被传入
+Interface Proxy = (Interface)constructor.newInstance(new Object[] (handler));
+为了简化对象创建过程，Proxy类中的newInstance方法封装了2~4，只需两步即可完成代理对象的创建。
+生成的ProxySubject继承Proxy类实现Subject接口，实现的Subject的方法实际调用处理器的invoke方法，而invoke方法利用反射调用的是被代理对象的的方法（Object result=method.invoke(proxied,args)）
+
+UserSerivce proxyUserSerivce = (UserSerivce) Proxy.newProxyInstance(LubanTransaction.class.getClassLoader(),
+        new Class[]{UserSerivce.class}, new InvocationHandler() {
+            @Override
+            public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+                try {
+                    System.out.println("开启事物:"+method.getName());
+                    return method.invoke(userSerivce, args);
+                } finally {
+                    System.out.println("关闭事物:"+method.getName());
+                }
+            }
+        });
+proxyUserSerivce.createUser("luban");
+
+
+二、spring ioc
+ioc的核心就两点 创建管理bean 和bean之间的 依赖注入
+
+1、bean的创建管理
+spring中实体bean的构建
+1、通过构造函数创建对象。（通过反射实现）
+     1.1 利用无参构造函数+setter方法注入值
+     1.2 利用有参构造函数直接注入
+
+2、通过静态工厂方法创建对象
+      比如A/B测试，使用这个很好用
+
+3、通过FactoryBean工厂方法创建对象。
+      指定一个Bean工厂来创建对象，对象构建初始化完全交由该工厂来实现
+
+bean作⽤范围 
+很多时候Bean对象是⽆状态的 ，⽽有些⼜是有状态的 ⽆状态的对象我们采⽤单例即可，⽽有 状态则必须是多例的模式，通过scope 即可创建 scope=“prototype” scope=“singleton”
+如果⼀个Bean设置成 prototype 我们可以 通过BeanFactoryAware 获取 BeanFactory 对象 即可每次获取的都是新对像
+
+bean⽣命周期 
+Bean对象的创建、初始化、销毁即是Bean的⽣命周期。通过 init-method、destroymethod 属性可以分别指定期构建⽅法与初始⽅法
+
+bean加载机制 
+指示Bean在何时进⾏加载。设置lazy-init 即可，其值如下： true: 懒加载，即延迟加载 false:⾮懒加载，容器启动时即创建对象 default:默认，采⽤default-lazy-init 中指定值，如果default-lazy-init  没指定就是 false
+
+2、依赖注入
+试想IOC中如果没有依赖注⼊，那这个框架就只能帮助我们构建⼀些简单的Bean，⽽之前所说 的复杂Bean的构建问题将⽆法解决，spring这个框架不可能会像现在这样成功。 spring 中 ioc 如何依赖注⼊呢。有以下⼏种⽅式： 
+1. set⽅法注⼊ 
+<bean class="com.tuling.spring.HelloSpring">
+    <property name="fine" ref="fineSpring"/>
+</bean>
+2. 构造⽅法注⼊ 
+<bean class="com.tuling.spring.HelloSpring">
+    <constructor-arg name="fine">
+        <bean class="com.tuling.spring.FineSpring"/>
+    </constructor-arg>
+</bean>
+3. ⾃动注⼊(byName、byType） 
+<bean id="helloSpringAutowireConstructor" class="com.tuling.spring.HelloSpring" autowire="byName">
+</bean>
+4. ⽅法注⼊(lookup-method)
+
+3、ioc是如何实现的
+需要再好好听一下ioc的课程
+https://www.cnblogs.com/ITtangtang/p/3978349.html
+BeanDeﬁnition
+DefaultResourceLoader 
+XmlBeanDeﬁnitionReader
+BeanDeﬁnitionRegistry
+BeanFactory 
+DefaultListableBeanFactory
+AutowireCapableBeanFactory 
+AbstractAutowireCapableBeanFactory
+SingletonBeanRegistry 
+DefaultSingletonBeanRegistry
+
+
+三、spring aop
+1、什么是aop
+oop是自上而下的，aop可以理解成把oop中一些需要重复做的工作整合出来，使用一些动态代理技术，动态从切面织入到oop中。
+2、aop的核心概念
+横切关注点：对哪些方法进行拦截，拦截后怎么处理，这些关注点称之为横切关注点
+切面（aspect）：类是对物体特征的抽象，切面就是对横切关注点的抽象
+连接点（joinpoint）：就是类里面的方法（springAOP中只支持方法类型的拦截点）
+切入点（pointcut）：可以理解成joinpoint的集合
+通知（advice）：所谓通知指的就是指拦截到连接点之后要执行的代码，通知分为前置（before）、后置（after）、异常（afterthRow）、最终(afterfinally)、环绕(around)通知五类
+目标对象：代理的目标对象
+织入（weave）：将切面应用到目标对象并导致代理对象创建的过程
+引入（introduction）：在不修改代码的前提下，引入可以在运行期为类动态地添加一些方法或字段
+3、Spring对AOP的支持
+Spring中AOP代理由Spring的IOC容器负责生成、管理，其依赖关系也由IOC容器负责管理。因此，AOP代理可以直接使用容器中的其它bean实例作为目标，这种关系可由IOC容器的依赖注入提供。
+4、Spring创建代理的规则为：
+1、如果代理的是接口，则使用Java动态代理来创建AOP代理；
+2、当需要代理的类不是代理接口的时候，Spring会切换为使用CGLIB代理，也可强制使用CGLIB。
+强制使用CGLIB生成代理：<aop:config>里面有一个"proxy-target-class"属性设置为true
+
+5、Spring AOP 实现原理
+java动态代理和cglib
+容器启动的时候，加载实例化bean对象，然后AopProxy从******中拿到bean对象，然后对这个对象生成proxy对象，然后把这个对象放到ConcurrentHashMap中缓存起来,当业务类中使用这个bean的时候，实际上拿到的是这个bean的proxy对象。
+
+通知链是通过Advised.getInterceptorsAndDynamicInterceptionAdvice()，可以看到实际的获取工作其实是由AdvisorChainFactory. getInterceptorsAndDynamicInterceptionAdvice()这个方法来完成的，获取到的结果会被缓存，如果得到的拦截器链为空，则直接反射调用目标方法，否则创建MethodInvocation，调用其proceed方法，触发拦截器链的执行
+
+四、spring mvc
+1、Spring MVC 运行流程
+
+DispatchServlet
+以下是五大核心组件
+HandlerMapping,
+HandlerAdapter,
+ViewResolver,
+HandlerExceptionResolver(出现异常的时候才会用到它),
+HandlerInterceptor
+
+1.用户发送请求到DispatchServlet
+
+2.DispatchServlet根据请求路径查询具体的Handler
+
+3.HandlerMapping返回一个HandlerExcutionChain给DispatchServlet
+
+HandlerExcutionChain：Handler和Interceptor集合
+
+4.DispatchServlet基于Handler找到对应的HandlerAdapter适配器
+
+5.HandlerAdapter调用具体的Handler处理业务
+
+6.Handler处理结束返回一个具体的ModelAndView给适配器
+
+ModelAndView:model–>数据模型，view–>视图名称
+
+7.适配器将ModelAndView给DispatchServlet
+
+8.DispatchServlet把视图名称给ViewResolver视图解析器
+
+9.ViewResolver返回一个具体的视图view给DispatchServlet
+
+10.view渲染视图
+
+11.展示给用户
+
+2、Spring MVC 启动流程
+
+spring容器 init()->
+HttpServletBean调用initServletBean()->
+FrameworkServlet调用initWebApplicationContenxt()-createWebApplicationContext()-initFrameworkServlet()->
+DispatchServlet，之后就是DispatchServlet里面的运行流程了
+
+
+MYABITS
+一、mybatis
+1、mybatis中#和$的区别
+参数标记符号
+# 预编译防止sql注入，可以提高数据库中缓存命中率
+$ 可以sql注入，代替作用，比如动态的传入表名
+   select * from ${tablename};
+
+2、parameterType和parameterMap（已被废弃）
+
+3、resultType和resultMap
+      使用resultType（返回类型）进行输出映射，只有查询出来的列名和pojo中的属性名一致，该列才能映射成功；resultMap（返回结果集）完成高级输出结果映射，比如返回list。
+
+二、mybatis的逆向工程
+mybatis  generator工具，
+1、引入jar包
+2、mybatis-generator:generate
+3、使用生成example类可以使用java对象拼接sql
+
+
+三、mybatis核心概念
+Configuration
+       管理mybatis-config.xml全局配置的关系类。
+SqlSessionFactory
+       Session管理工厂接口。
+Session
+        SqlSession是一个面向用户（程序员）的接口，其中提供了很多操作数据库的方法。
+Executor
+        执行器是一个接口（基本执行器，缓存执行器）；
+        作用：SqlSession内部通过执行器操作数据库
+MappedStatement
+         底层封装对象
+         作用：对数据库存储封装，包括sql语句、输入输出参数
+StatementHandler
+         具体操作数据库相关的handler接口
+ResultSetHandler
+         具体操作数据库返回结果的handler接口
+
+
+
+
+mapper配置的几种方式：package、resource、url、class
+   package：路径为某个目录（我们一般使用这个）
+       package形式：
+　　<mappers>
+　　　　 <package name="com.mybatis.builder"/>
+　　 </mappers>
+
+   resource：路径为xml映射文件的路径包名+文件名
+       resource形式：
+　　<mappers>  
+         <mapper resource="com/m_bingo/mybatis/model/BlogMapper.xml"/>  
+        </mappers>
+
+   url：路径对应的是网络上了某个文件，注意file:// 前缀 +路径+文件名
+       url形式：
+　　<mappers>
+　　　　<mapper url="file:///var/mappers/BlogMapper.xml"/> 
+　　</mappers>
+
+   mapperClass：class实际上是接口，写的是接口的全名。
+       class形式：
+　　<mappers>
+　　　　 <mapper class="com.mybatis.builder.BlogMapper"/> 
+　　 </mappers>
+
+在mybatis中只能配置以上的一种，如果重复配置会报错
+
+mybatis三种执行器
+simple   简单的
+reuse     复用的
+batch     批量的
+
+SimpleExecutor：
+        每执行一次update或select，就开启一个Statement对象，用完立刻关闭Statement对象。
+ReuseExecutor：
+        执行update或select，以sql作为key查找Statement对象，存在就使用，不存在就创建，用完后，不关闭Statement对象，而是放置于Map内，供下一次使用。简言之，就是重复使用Statement对象。
+BatchExecutor：
+        执行update（没有select，JDBC批处理不支持select），将所有sql都添加到批处理中（addBatch()），等待统一执行（executeBatch()），它缓存了多个Statement对象，每个Statement对象都是addBatch()完毕后，等待逐一执行executeBatch()批处理。与JDBC批处理相同。作用范围：Executor的这些特点，都严格限制在SqlSession生命周期范围内。
+
+Mybatis中如何指定使用哪一种Executor执行器？
+        答：在Mybatis配置文件中，可以指定默认的ExecutorType执行器类型，也可以手动给DefaultSqlSessionFactory的创建SqlSession的方法传递ExecutorType类型参数。
+
+CachingExecutor   缓存执行器，一级缓存，默认开启
+
+一级缓存是SqlSession级别的缓存。在操作数据库时需要构造 sqlSession对象，在对象中有一个(内存区域)数据结构（HashMap）用于存储缓存数据。不同的sqlSession之间的缓存数据区域（HashMap）是互相不影响的。
+
+　　一级缓存的作用域是同一个SqlSession，在同一个sqlSession中两次执行相同的sql语句，第一次执行完毕会将数据库中查询的数据写到缓存（内存），第二次会从缓存中获取数据将不再从数据库查询，从而提高查询效率。当一个sqlSession结束后该sqlSession中的一级缓存也就不存在了。Mybatis默认开启一级缓存。
+
+二级缓存是mapper级别的缓存，多个SqlSession去操作同一个Mapper的sql语句，多个SqlSession去操作数据库得到数据会存在二级缓存区域，多个SqlSession可以共用二级缓存，二级缓存是跨SqlSession的。
+
+　　二级缓存是多个SqlSession共享的，其作用域是mapper的同一个namespace，不同的sqlSession两次执行相同namespace下的sql语句且向sql中传递参数也相同即最终执行相同的sql语句，第一次执行完毕会将数据库中查询的数据写到缓存（内存），第二次会从缓存中获取数据将不再从数据库查询，从而提高查询效率。Mybatis默认没有开启二级缓存需要在setting全局参数中配置开启二级缓存。
+
+Interceptor 责任链模式拦截器(其实就是aop，我们常用的分页插件，就是拦截器)
+
+
+MappedStatement
+
+StatementHandler
+
+RestultSetHandler
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
