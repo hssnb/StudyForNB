@@ -14,3 +14,8 @@ https://www.cnblogs.com/YangshengQuan/p/8431520.html
 二、使用idea搭建SSM框架
 
 https://www.cnblogs.com/hackyo/p/6646051.html
+
+
+三、spring和mybatis的相关知识点（纯手打）
+
+[spring、mybais](https://github.com/hssnb/StudyForNB/blob/master/SpringAndMybatis.txt)
