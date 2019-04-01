@@ -95,16 +95,21 @@ bean加载机制
 3、ioc是如何实现的
 需要再好好听一下ioc的课程
 https://www.cnblogs.com/ITtangtang/p/3978349.html
-BeanDeﬁnition
-DefaultResourceLoader 
-XmlBeanDeﬁnitionReader
-BeanDeﬁnitionRegistry
-BeanFactory 
-DefaultListableBeanFactory
-AutowireCapableBeanFactory 
-AbstractAutowireCapableBeanFactory
-SingletonBeanRegistry 
-DefaultSingletonBeanRegistry
+1.BeanDeﬁnition
+2.DefaultResourceLoader 
+3.XmlBeanDeﬁnitionReader
+4.BeanDeﬁnitionRegistry
+5.BeanFactory 
+6.DefaultListableBeanFactory
+7.AutowireCapableBeanFactory 
+8.AbstractAutowireCapableBeanFactory
+9.SingletonBeanRegistry 
+10.DefaultSingletonBeanRegistry
+
+1-4相当于bean的配方，XmlBeanDeﬁnitionReader从spring.xml中读取配置，然后创建BeanDeﬁnition,之后把BeanDeﬁnition注册到BeanDeﬁnitionRegistry中。
+
+5-10是bean的构建过程（通过bean工厂构建，因为再1-4已经有bean的配方了），BeanFactory-doGetBean()->AbstractBeanFactory会从
+SingletonBeanRegistry中获取缓存的singletonBean，如果没有则创建singletonBean并缓存到SingletonBeanRegistry中，如果需要的是多例的bean，那么会直接创建，不会从SingletonBeanRegistry中获取，之后AbstractAutowireCapableBeanFactory会createBeanInstance()-newInstance();
 
 
 三、spring aop
