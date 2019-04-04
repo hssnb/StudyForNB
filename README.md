@@ -19,3 +19,6 @@ https://www.cnblogs.com/hackyo/p/6646051.html
 三、spring和mybatis的相关知识点（纯手打）
 
 [spring、mybais](https://github.com/hssnb/StudyForNB/blob/master/SpringAndMybatis.txt)
+
+四、redis
+[redis](https://github.com/hssnb/StudyForNB/blob/master/redis.txt)
