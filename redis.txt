@@ -8,6 +8,9 @@ Redis核心原理：
 单线程必满了多线程的切换性能消耗问题
 2、redis单线程如何处理那么多的并发客户端连接
 redis的   io多路复用  ：redis利用epoll来实现io多路复用，将连接信息和时间放到队列中
+3、模型图
+https://www.processon.com/diagraming/5ca6cdf6e4b00f8893f5e884
+
 
 redis持久化
 1、RDB快照：比如60秒内至少有1000个key被改动，自动保存一次数据集到磁盘
