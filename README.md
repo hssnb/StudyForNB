@@ -23,3 +23,7 @@ https://www.cnblogs.com/hackyo/p/6646051.html
 四、redis
 
 [redis](https://github.com/hssnb/StudyForNB/blob/master/redis.txt)
+
+五、性能调优
+
+[mysql、jvm](https://github.com/hssnb/StudyForNB/blob/master/%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98.txt)
